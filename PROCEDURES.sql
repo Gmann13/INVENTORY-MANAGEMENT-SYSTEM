@@ -18,6 +18,21 @@ INCREMENT BY 1
 MAXVALUE 99
 NOCYCLE
 CACHE 20;
+
+
+---------------------------------------------------------------
+----------------------SEQUENCE FOR SUPPLIER ID-----------------
+---------------------------------------------------------------
+
+SELECT * FROM SUPPLIERS;
+drop sequence supplier_id_seq;
+create sequence supplier_id_seq
+  START WITH 16
+  INCREMENT BY 1
+  MAXVALUE 999
+  NOCYCLE
+  CACHE 20;
+  
 --------------------------------------------------------------------------------
 ----------------------------PROCEDURE CUSTOMER ONBOARDING-----------------------
 --------------------------------------------------------------------------------
@@ -341,6 +356,110 @@ EXCEPTION
     WHEN OTHERS THEN
         DBMS_OUTPUT.PUT_LINE(SQLERRM);
 
+END;
+/
+
+
+  
+---------------------------------------------------------------
+----------------------PROCEDURE SUPPLIER ONBOARDING------------
+---------------------------------------------------------------
+
+CREATE OR REPLACE PROCEDURE supplier_onboarding (
+                        P_SUPPLIER_ID	NUMBER,
+                        P_SUPPLIER_NAME	VARCHAR2,
+                        P_SUPPLIER_CONTACT_NO	NUMBER,
+                        P_SUPPLIER_EMAIL_ID	VARCHAR2,
+                        P_SUPPLIER_ADDRESS_1	VARCHAR2,
+                        P_SUPPLIER_ADDRESS_2	VARCHAR2,
+                        P_SUPPLIER_CITY	VARCHAR2,
+                        P_SUPPLIER_STATE	VARCHAR2,
+                        P_SUPPLIER_ZIP	NUMBER,
+                        P_SUPPLIER_SINCE	DATE
+                        
+)
+IS
+    v_supplier_id NUMBER;
+    v_email_exists NUMBER;
+    v_contact_exists NUMBER;
+    EX_RAISE_EMAIL_ERROR EXCEPTION;
+    EX_RAISE_CONTACT_ERROR EXCEPTION;
+    INVALID_SUPPLIER_NAME EXCEPTION;
+    INVALID_CONTACT_NO EXCEPTION;
+    
+BEGIN
+    -- Get the next customer ID from the sequence
+   SELECT COUNT(*) INTO v_email_exists FROM suppliers WHERE supplier_email_id = p_supplier_email_id;
+    
+    SELECT COUNT(*) INTO v_contact_exists FROM SUPPLIERS WHERE supplier_contact_no = p_supplier_contact_no;
+    
+    
+    IF v_email_exists > 0 THEN
+      RAISE  EX_RAISE_EMAIL_ERROR;
+    END IF;
+    
+     IF v_contact_exists > 0 THEN
+      RAISE  EX_RAISE_CONTACT_ERROR;
+    END IF;
+    
+     if p_supplier_name is NULL   then
+            raise INVALID_SUPPLIER_NAME;
+            END IF;
+            
+    if p_supplier_contact_no is NULL or  LENGTH(p_supplier_contact_no) != 10  then
+            raise INVALID_CONTACT_NO;
+            END IF;
+
+SELECT supplier_id_seq.currVAL INTO v_supplier_id FROM DUAL;
+   
+            
+    -- Insert new customer record into the database
+    INSERT INTO suppliers (
+                        SUPPLIER_ID,
+                        SUPPLIER_NAME,
+                        SUPPLIER_CONTACT_NO,
+                        SUPPLIER_EMAIL_ID,
+                        SUPPLIER_ADDRESS_1,
+                        SUPPLIER_ADDRESS_2,
+                        SUPPLIER_CITY,
+                        SUPPLIER_STATE,
+                        SUPPLIER_ZIP,
+                        SUPPLIER_SINCE
+                        
+
+    ) VALUES (
+                        v_supplier_id,
+                        P_SUPPLIER_NAME,
+                        P_SUPPLIER_CONTACT_NO,
+                        P_SUPPLIER_EMAIL_ID,
+                        P_SUPPLIER_ADDRESS_1,
+                        P_SUPPLIER_ADDRESS_2,
+                        P_SUPPLIER_CITY,
+                        P_SUPPLIER_STATE,
+                        P_SUPPLIER_ZIP,
+                        SYSDATE
+                        
+    );
+    
+    COMMIT;
+    
+    DBMS_OUTPUT.PUT_LINE('Supplier ' || v_supplier_id || ' onboarded successfully!');
+    
+    EXCEPTION
+    WHEN EX_RAISE_EMAIL_ERROR THEN
+    dbms_output.put_line('Customer email id already exists. Please use another email id.');
+    RETURN;
+    WHEN EX_RAISE_CONTACT_ERROR THEN
+     dbms_output.put_line('SUPPLIER CONTACT NO already exists. Please use another CONTACT NO.');
+     RETURN;
+     WHEN INVALID_SUPPLIER_NAME THEN
+     dbms_output.put_line('YOU DID NOT ADD A SUPPLIER NAME. PLEASE ADD A SUPPLIER NAME');
+     RETURN;
+    WHEN INVALID_CONTACT_NO THEN
+    dbms_output.put_line('INVALID CONTACT NUMBER. ADD A 10 DIGIT CONTACT NUMBER');
+     RETURN;
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE(SQLERRM);
 END;
 /
 
