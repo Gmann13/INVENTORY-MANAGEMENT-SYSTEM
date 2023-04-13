@@ -177,7 +177,7 @@ IS
     INVALID_CONTACT_NO EXCEPTION;
     INVALID_FIRST_NAME EXCEPTION;
 BEGIN
-    -- Get the next customer ID from the sequence
+    -- Get the next admin ID from the sequence
    SELECT admin_id_seq.currVAL INTO v_admin_id FROM DUAL;
    SELECT COUNT(*) INTO v_email_exists FROM admin WHERE ADMIN_email_id = p_ADMIN_EMAIL_ID;
     
@@ -198,7 +198,7 @@ BEGIN
             raise INVALID_CONTACT_NO;
             END IF;
             
-    -- Insert new customer record into the database
+    -- Insert new admin record into the database
     INSERT INTO admin (
                     ADMIN_ID,
                     ADMIN_F_NAME,
@@ -271,7 +271,7 @@ IS
     INVALID_CONTACT_NO EXCEPTION;
     
 BEGIN
-    -- Get the next customer ID from the sequence
+    -- Get the next supplier ID from the sequence
    SELECT COUNT(*) INTO v_email_exists FROM suppliers WHERE supplier_email_id = p_supplier_email_id;
     
     SELECT COUNT(*) INTO v_contact_exists FROM SUPPLIERS WHERE supplier_contact_no = p_supplier_contact_no;
@@ -296,7 +296,7 @@ BEGIN
 SELECT supplier_id_seq.currVAL INTO v_supplier_id FROM DUAL;
    
             
-    -- Insert new customer record into the database
+    -- Insert new supplier record into the database
     INSERT INTO suppliers (
                         SUPPLIER_ID,
                         SUPPLIER_NAME,
