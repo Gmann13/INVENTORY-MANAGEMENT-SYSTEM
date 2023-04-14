@@ -705,7 +705,7 @@ WHEN INVALID_PRICE THEN
 END;
 
 --------------------------------------------------------------------------------
-----------------------------PROCEDURE UPDATE STOCK------------------------------
+----------------------------PROCEDURE UPDATE STOCK-----------------------
 --------------------------------------------------------------------------------
 CREATE OR REPLACE PROCEDURE update_stock (
     p_stock_id in stock.stock_id%type,
@@ -719,17 +719,36 @@ CREATE OR REPLACE PROCEDURE update_stock (
 IS
     v_stock_quantity NUMBER;
     v_stock_price NUMBER;
+    v_stock_name NUMBER;
+    v_stock_supplier_id NUMBER;
+    v_stock_in_date NUMBER;
     EX_RAISE_INVALID_STOCK_QUANTITY EXCEPTION;
     EX_RAISE_INVALID_STOCK_PRICE EXCEPTION;
+    EX_RAISE_INVALID_STOCK_NAME EXCEPTION;
+    EX_RAISE_INVALID_STOCK_SUPPLIER_ID EXCEPTION;
+    EX_RAISE_INVALID_STOCK_IN_DATE EXCEPTION;
+    
 BEGIN
 -----------EXCEPTION QUERY----------------
 SELECT COUNT(*) INTO V_STOCK_QUANTITY FROM STOCK WHERE stock_quantity = p_stock_quantity;
 SELECT COUNT(*) INTO V_STOCK_PRICE FROM STOCK WHERE stock_price = p_stock_price;
+SELECT COUNT(*) INTO V_STOCK_NAME FROM STOCK WHERE stock_name = p_stock_name;
+SELECT COUNT(*) INTO V_STOCK_SUPPLIER_ID FROM STOCK WHERE stock_supplier_id = p_stock_supplier_id;
+SELECT COUNT(*) INTO V_STOCK_IN_DATE FROM STOCK WHERE stock_in_date = p_stock_in_date;
 IF V_STOCK_quantity = NULL THEN
       RAISE  EX_RAISE_INVALID_STOCK_QUANTITY;
     END IF;
 IF V_STOCK_price = NULL THEN
       RAISE  EX_RAISE_INVALID_STOCK_PRICE;
+    END IF;
+IF V_STOCK_name = NULL THEN
+      RAISE  EX_RAISE_INVALID_STOCK_name;
+    END IF;
+IF V_STOCK_supplier_id = NULL THEN
+      RAISE  EX_RAISE_INVALID_STOCK_supplier_id;
+    END IF;
+IF V_STOCK_in_date = NULL THEN
+      RAISE  EX_RAISE_INVALID_STOCK_in_date;
     END IF;
 -----------UPDATING STOCK VALUE----------------
 UPDATE STOCK SET stock_name = p_stock_name,
@@ -742,14 +761,24 @@ where stock_id = p_stock_id;
 COMMIT;
 
 EXCEPTION
-    WHEN EX_RAISE_INVALID_STOCK_QUANTITY THEN
+      WHEN EX_RAISE_INVALID_STOCK_QUANTITY THEN
       dbms_output.put_line('stock_quantity cant be NULL. Please use another value.');
       RETURN;
       WHEN EX_RAISE_INVALID_STOCK_PRICE THEN
       dbms_output.put_line('stock_price cant be NULL. Please use another value.');
       RETURN;
+      WHEN EX_RAISE_INVALID_STOCK_NAME THEN
+      dbms_output.put_line('stock_name cant be NULL. Please use another value.');
+      RETURN;
+      WHEN EX_RAISE_INVALID_STOCK_SUPPLIER_ID THEN
+      dbms_output.put_line('stock_supplier_id cant be NULL. Please use another value.');
+      RETURN;
+      WHEN EX_RAISE_INVALID_STOCK_IN_DATE THEN
+      dbms_output.put_line('stock_in_date cant be NULL. Please use another value.');
+      RETURN;
       END;
       /
+
 -----------------------------------------------------------------------------------
 ----------------------------PROCEDURE DELETE CUSTOMER------------------------------
 -----------------------------------------------------------------------------------
