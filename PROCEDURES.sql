@@ -51,6 +51,27 @@ create sequence RETURN_NUMBER_SEQ
   MAXVALUE 999
   NOCYCLE
   CACHE 20;  
+ ---------------------------------------------------------------
+-------------------SEQUENCE FOR ORDER NUMBER--------------------
+---------------------------------------------------------------
+drop sequence order_number_seq;
+create sequence order_number_seq
+  START WITH 110
+  INCREMENT BY 1
+  MAXVALUE 999
+  NOCYCLE
+  CACHE 20;
+  
+-------------------------------------------------------------------
+-------------------SEQUENCE FOR PRODUCT SALE ID--------------------
+-------------------------------------------------------------------
+drop sequence sale_id_seq;
+create sequence sale_id_seq
+  START WITH 110
+  INCREMENT BY 1
+  MAXVALUE 999
+  NOCYCLE
+  CACHE 20;
  
 --------------------------------------------------------------------------------
 ----------------------------PROCEDURE CUSTOMER ONBOARDING-----------------------
@@ -427,3 +448,126 @@ EXCEPTION
 END;
 /
 
+create or replace procedure customer_transaction_process(
+                P_ORDER_NUMBER	NUMBER,
+                P_ORDER_CUS_ID	NUMBER,
+                P_ORDER_DATE	DATE ,
+                P_ORDER_PAYMENT_METHOD	VARCHAR2
+                )
+is 
+
+  v_order_number  NUMBER ; -- replace with actual customer transaction ID
+  v_prod_id        NUMBER;
+  v_quantity       NUMBER;
+  
+  INVALID_Payment_Method exception;
+INVALID_customer_id exception;
+BEGIN
+
+ 
+SELECT order_number_seq.currVAL INTO v_order_number FROM DUAL;
+
+if P_ORDER_PAYMENT_METHOD is NULL   then
+            raise INVALID_Payment_Method;
+            END IF;
+            
+     if P_ORDER_CUS_ID is NULL   then
+            raise INVALID_customer_id;
+            END IF;       
+    
+
+
+
+
+    INSERT INTO customer_transaction (
+                    ORDER_NUMBER,
+                    ORDER_CUS_ID,
+                    ORDER_DATE,
+                    ORDER_PAYMENT_METHOD
+    ) VALUES (
+            v_order_number,
+      P_ORDER_CUS_ID,
+      P_ORDER_DATE,
+      P_ORDER_PAYMENT_METHOD
+    );
+    
+ COMMIT;
+  
+   DBMS_OUTPUT.PUT_LINE('Order ' ||  v_order_number || ' placed successfully!');
+   
+   EXCEPTION
+   WHEN INVALID_Payment_Method THEN
+    dbms_output.put_line('INVALID PAYMENT METHOD!');
+    RETURN;
+    WHEN INVALID_customer_id THEN
+    dbms_output.put_line('INVALID CUSTOMER ID!');
+    RETURN; 
+   
+END;
+
+create or replace procedure order_product (
+                            p_SALE_ID NUMBER,
+                            p_ORDER_NUMBER NUMBER,
+                            p_SALE_STOCK_ID NUMBER,
+                            p_ORDER_QTY NUMBER
+
+)
+
+IS 
+
+v_prod_id NUMBER;
+v_quantity  NUMBER;
+v_stock_quantity number;
+V_STOCK_ID NUMBER;
+V_ORDER_NUMBER NUMBER;
+STOCK_INAPPROPRIATE EXCEPTION;
+INVALID_ORDER_NUMBER EXCEPTION;
+INVALID_STOCK_ID  EXCEPTION;
+BEGIN
+    
+    SELECT sale_id_seq.currVAL INTO v_prod_id FROM DUAL;
+     SELECT COUNT(*) INTO V_STOCK_ID FROM STOCK WHERE stock_id = p_SALE_STOCK_ID;
+    SELECT stock_quantity INTO v_stock_quantity FROM stock WHERE stock_id=p_SALE_STOCK_ID;
+   SELECT COUNT(*) INTO V_ORDER_NUMBER FROM CUSTOMER_TRANSACTION WHERE ORDER_NUMBER = p_ORDER_NUMBER;
+    
+     IF V_STOCK_ID > 0 THEN
+      RAISE  INVALID_STOCK_ID;
+    END IF;
+    
+      IF V_ORDER_NUMBER > 0 THEN
+      RAISE  INVALID_ORDER_NUMBER;
+    END IF;
+    
+    if v_stock_quantity < p_ORDER_QTY THEN
+      RAISE  STOCK_INAPPROPRIATE;
+    END IF;
+    -- Insert product sale record into the database
+    INSERT INTO product_sale (
+      SALE_ID,
+      ORDER_NUMBER,
+      SALE_STOCK_ID,
+      ORDER_QTY
+    ) VALUES (
+      v_prod_id,
+      p_ORDER_NUMBER,
+      p_SALE_STOCK_ID,
+      p_ORDER_QTY
+    );
+    
+ 
+  COMMIT;
+  
+   DBMS_OUTPUT.PUT_LINE('Product ' || p_SALE_STOCK_ID || ' ordered successfully!');
+   
+   EXCEPTION
+    WHEN INVALID_ORDER_NUMBER THEN
+    dbms_output.put_line('INVALID ORDER ID!');
+    RETURN;
+    WHEN INVALID_STOCK_ID THEN
+    dbms_output.put_line('INVALID STOCK ID!');
+    RETURN;
+    WHEN STOCK_INAPPROPRIATE THEN
+    dbms_output.put_line('ORDER QUANTITY GREATER THAN AVAILABLE STOCK!');
+    RETURN;
+  
+END;
