@@ -73,6 +73,28 @@ create sequence sale_id_seq
   NOCYCLE
   CACHE 20;
  
+ ------------------------------------------------------------------------------
+-------------------SEQUENCE FOR SUPPLIER TRANSACTION NUMBER--------------------
+-------------------------------------------------------------------------------
+drop sequence supplier_transaction_id_seq;
+create sequence supplier_transaction_id_seq
+  START WITH 110
+  INCREMENT BY 1
+  MAXVALUE 999
+  NOCYCLE
+  CACHE 20;
+---------------------------------------------------------------
+-----------------SEQUENCE FOR STOCK ID-------------------------
+---------------------------------------------------------------
+SELECT * FROM STOCK;
+drop sequence stock_id_seq;
+create sequence stock_id_seq
+  START WITH 16
+  INCREMENT BY 1
+  MAXVALUE 999
+  NOCYCLE
+  CACHE 20;
+  
 --------------------------------------------------------------------------------
 ----------------------------PROCEDURE CUSTOMER ONBOARDING-----------------------
 --------------------------------------------------------------------------------
@@ -448,6 +470,9 @@ EXCEPTION
 END;
 /
 
+----------------------------------------------------------------------------------------
+------------------------PROCEDURE CUSTOMER TRANSACTION----------------------------------
+----------------------------------------------------------------------------------------
 create or replace procedure customer_transaction_process(
                 P_ORDER_NUMBER	NUMBER,
                 P_ORDER_CUS_ID	NUMBER,
@@ -504,6 +529,11 @@ if P_ORDER_PAYMENT_METHOD is NULL   then
     RETURN; 
    
 END;
+
+
+----------------------------------------------------------------------------------------
+------------------------PROCEDURE CUSTOMER TRANSACTION----------------------------------
+----------------------------------------------------------------------------------------
 
 create or replace procedure order_product (
                             p_SALE_ID NUMBER,
@@ -571,8 +601,111 @@ BEGIN
     RETURN;
   
 END;
+
+
+----------------------------------------------------------------------------------------
+------------------------PROCEDURE SUPPLIER TRANSACTION----------------------------------
+----------------------------------------------------------------------------------------
+create or replace procedure Pro_Supplier_Transaction (
+                                    P_SUPPLIER_TRANSACTION_ID	NUMBER,
+                                    P_SUPPLIER_STOCK_ID	NUMBER,
+                                    P_ADMIN_ID	NUMBER,
+                                    P_SUPPLIER_TRANSACTION_DATE DATE,
+                                    P_SUPPLY_QTY	NUMBER,
+                                    P_SUPPLY_PRICE FLOAT,
+                                    P_STOCK_ID NUMBER,
+                                    P_STOCK_NAME	VarChar2,
+                                    P_STOCK_QUANTITY NUMBER,
+                                    P_REORDER_LEVEL NUMBER,
+                                    P_STOCK_PRICE	FLOAT,
+                                    P_SPECS	VarChar2,
+                                    P_STOCK_SUPPLIER_ID NUMBER,
+                                    P_STOCK_IN_DATE Date,
+                                    P_MANUFACTURER_NAME	VarChar2
+)
+
+IS 
+
+v_supplier_transaction_id NUMBER;
+V_ADMIN_ID NUMBER;
+V_STOCK_ID NUMBER;
+INVALID_QTY EXCEPTION;
+INVALID_PRICE EXCEPTION;
+INVALID_ADMIN_ID EXCEPTION;
+BEGIN
+    
+    SELECT supplier_transaction_id_seq.CURRVAL INTO v_supplier_transaction_id FROM DUAL;
+    SELECT stock_id_seq.CURRVAL INTO V_STOCK_ID FROM DUAL;
+    SELECT COUNT(*) INTO V_ADMIN_ID FROM ADMIN WHERE ADMIN_ID = P_ADMIN_ID;
+    
+  
+      if P_SUPPLY_QTY is NULL OR P_SUPPLY_QTY = 0  then
+            raise INVALID_QTY;
+            END IF;
+            
+    if P_SUPPLY_PRICE is NULL OR P_SUPPLY_PRICE = 0  then
+            raise INVALID_PRICE;
+            END IF;
+    if P_ADMIN_ID is NULL OR V_ADMIN_ID > 0  then
+            raise INVALID_ADMIN_ID;
+            END IF;
+    -- Insert product sale record into the database
+    INSERT INTO SUPPLIER_TRANSACTION (
+                                    SUPPLIER_TRANSACTION_ID,
+                                    SUPPLIER_STOCK_ID,
+                                    ADMIN_ID,
+                                    SUPPLIER_TRANSACTION_DATE,
+                                    SUPPLY_QTY,
+                                    SUPPLY_PRICE
+                                    
+    ) VALUES (
+                                    P_SUPPLIER_TRANSACTION_ID,
+                                    P_SUPPLIER_STOCK_ID,
+                                    P_ADMIN_ID,
+                                    P_SUPPLIER_TRANSACTION_DATE,
+                                    P_SUPPLY_QTY,
+                                    P_SUPPLY_PRICE
+                                    
+    );
+    
+ INSERT INTO STOCK (                STOCK_ID,
+                                    STOCK_NAME,
+                                    STOCK_QUANTITY,
+                                    REORDER_LEVEL,
+                                    STOCK_PRICE,
+                                    SPECS,
+                                    STOCK_SUPPLIER_ID,
+                                    STOCK_IN_DATE,
+                                    MANUFACTURER_NAME )
+                                    VALUES
+                                    (P_STOCK_ID,
+                                    P_STOCK_NAME,
+                                    P_STOCK_QUANTITY,
+                                    P_REORDER_LEVEL,
+                                    P_STOCK_PRICE,
+                                    P_SPECS,
+                                    P_STOCK_SUPPLIER_ID,
+                                    P_STOCK_IN_DATE,
+                                    P_MANUFACTURER_NAME);
+  COMMIT;
+  
+   DBMS_OUTPUT.PUT_LINE('SUPPLY ' || v_supplier_transaction_id || ' STOCKED successfully!');
+   DBMS_OUTPUT.PUT_LINE('SUPPLY ' || V_STOCK_ID || ' STOCKED successfully!');
+   
+   
+   EXCEPTION
+ WHEN INVALID_QTY THEN
+    dbms_output.put_line('INVALID QUANTITY!');  
+WHEN INVALID_PRICE THEN
+    dbms_output.put_line('INVALID PRICE!');  
+   WHEN INVALID_ADMIN_ID THEN
+    dbms_output.put_line('INVALID ADMIN ID!');  
+   
+
+END;
+
 --------------------------------------------------------------------------------
-----------------------------PROCEDURE UPDATE STOCK-----------------------
+----------------------------PROCEDURE UPDATE STOCK------------------------------
 --------------------------------------------------------------------------------
 CREATE OR REPLACE PROCEDURE update_stock (
     p_stock_id in stock.stock_id%type,
@@ -617,3 +750,92 @@ EXCEPTION
       RETURN;
       END;
       /
+-----------------------------------------------------------------------------------
+----------------------------PROCEDURE DELETE CUSTOMER------------------------------
+-----------------------------------------------------------------------------------
+CREATE OR REPLACE PROCEDURE delete_customer
+               ( p_customer_id number)
+               
+               is
+    V_CUSTOMER_ID NUMBER;
+   INVALID_CUSTOMER_ID EXCEPTION;             
+               begin 
+               SELECT COUNT(*) INTO V_CUSTOMER_ID FROM CUSTOMER WHERE CUSTOMER_ID = P_CUSTOMER_ID;
+               if  V_CUSTOMER_ID > 0  then
+            raise INVALID_CUSTOMER_ID;
+            END IF;
+               
+               delete from customer where customer_id = p_customer_id;
+               COMMIT;
+               DBMS_OUTPUT.PUT_LINE('CUSTOMER ' || V_CUSTOMER_ID || ' DELETED SUCCESSFULLY!');
+    EXCEPTION
+    WHEN INVALID_CUSTOMER_ID THEN
+    DBMS_OUTPUT.PUT_LINE('CUSTOMER ' || V_CUSTOMER_ID || ' DOES NOT EXIST! CANNOT DELETE');
+               end;
+
+-----------------------------------------------------------------------------------
+----------------------------PROCEDURE DELETE ADMIN---------------------------------
+-----------------------------------------------------------------------------------               
+
+CREATE OR REPLACE PROCEDURE delete_admin
+               ( p_admin_id number)
+               
+               is
+               
+        V_ADMIN_ID NUMBER;
+        INVALID_ADMIN_ID EXCEPTION;    
+               begin 
+               SELECT COUNT(*) INTO V_ADMIN_ID FROM ADMIN WHERE ADMIN_ID = p_admin_id;
+               if  V_ADMIN_ID > 0  then
+            raise INVALID_ADMIN_ID;
+            END IF;
+            
+               delete from admin where admin_id = p_admin_id;
+    EXCEPTION
+    WHEN INVALID_ADMIN_ID THEN
+    DBMS_OUTPUT.PUT_LINE('ADMIN ' || V_ADMIN_ID || ' DOES NOT EXIST! CANNOT DELETE');
+               end;
+  
+-----------------------------------------------------------------------------------
+----------------------------PROCEDURE DELETE SUPPLIER------------------------------
+-----------------------------------------------------------------------------------
+               
+
+CREATE OR REPLACE PROCEDURE delete_supplier
+               ( p_supplier_id number)
+               
+               is
+         V_SUPPLIER_ID NUMBER;
+        INVALID_SUPPLIER_ID EXCEPTION;       
+               begin 
+              SELECT COUNT(*) INTO V_SUPPLIER_ID FROM SUPPLIERS WHERE SUPPLIER_ID = p_supplier_id;
+               if  V_SUPPLIER_ID > 0  then
+            raise INVALID_SUPPLIER_ID;
+            END IF; 
+               delete from suppliers where supplier_id = p_supplier_id;
+           EXCEPTION
+    WHEN INVALID_SUPPLIER_ID THEN
+    DBMS_OUTPUT.PUT_LINE('SUPPLIER ' || V_SUPPLIER_ID || ' DOES NOT EXIST! CANNOT DELETE');     
+               end;
+
+-----------------------------------------------------------------------------------
+----------------------------PROCEDURE DELETE STOCK---------------------------------
+-----------------------------------------------------------------------------------               
+
+CREATE OR REPLACE PROCEDURE delete_stock
+               ( p_stock_id number)
+               
+               is
+    V_STOCK_ID NUMBER;
+    INVALID_STOCK_ID EXCEPTION;
+               begin 
+                SELECT COUNT(*) INTO V_STOCK_ID FROM STOCK WHERE STOCK_ID = p_stock_id;
+               if  V_STOCK_ID > 0  then
+            raise INVALID_STOCK_ID;
+            END IF;
+               delete from stock where stock_id = p_stock_id;
+                EXCEPTION
+    WHEN INVALID_STOCK_ID THEN
+    DBMS_OUTPUT.PUT_LINE('STOCK ' || V_STOCK_ID || ' DOES NOT EXIST! CANNOT DELETE');    
+               end;
+
