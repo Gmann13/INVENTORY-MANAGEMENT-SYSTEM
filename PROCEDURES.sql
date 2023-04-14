@@ -571,3 +571,49 @@ BEGIN
     RETURN;
   
 END;
+--------------------------------------------------------------------------------
+----------------------------PROCEDURE UPDATE STOCK-----------------------
+--------------------------------------------------------------------------------
+CREATE OR REPLACE PROCEDURE update_stock (
+    p_stock_id in stock.stock_id%type,
+    p_stock_name in stock.stock_name%type,
+    p_stock_quantity in stock.stock_quantity%type,
+    p_reorder_level in stock.reorder_level%type,
+    p_stock_price in stock.stock_price%type,
+    p_stock_supplier_id in stock.stock_supplier_id%type,
+    p_stock_in_date in stock.stock_in_date%type
+)
+IS
+    v_stock_quantity NUMBER;
+    v_stock_price NUMBER;
+    EX_RAISE_INVALID_STOCK_QUANTITY EXCEPTION;
+    EX_RAISE_INVALID_STOCK_PRICE EXCEPTION;
+BEGIN
+-----------EXCEPTION QUERY----------------
+SELECT COUNT(*) INTO V_STOCK_QUANTITY FROM STOCK WHERE stock_quantity = p_stock_quantity;
+SELECT COUNT(*) INTO V_STOCK_PRICE FROM STOCK WHERE stock_price = p_stock_price;
+IF V_STOCK_quantity = NULL THEN
+      RAISE  EX_RAISE_INVALID_STOCK_QUANTITY;
+    END IF;
+IF V_STOCK_price = NULL THEN
+      RAISE  EX_RAISE_INVALID_STOCK_PRICE;
+    END IF;
+-----------UPDATING STOCK VALUE----------------
+UPDATE STOCK SET stock_name = p_stock_name,
+stock_quantity = p_stock_quantity,
+reorder_level = p_reorder_level,
+stock_price = p_stock_price,
+stock_supplier_id = p_stock_supplier_id,
+stock_in_date = p_stock_in_date
+where stock_id = p_stock_id; 
+COMMIT;
+
+EXCEPTION
+    WHEN EX_RAISE_INVALID_STOCK_QUANTITY THEN
+      dbms_output.put_line('stock_quantity cant be NULL. Please use another value.');
+      RETURN;
+      WHEN EX_RAISE_INVALID_STOCK_PRICE THEN
+      dbms_output.put_line('stock_price cant be NULL. Please use another value.');
+      RETURN;
+      END;
+      /
