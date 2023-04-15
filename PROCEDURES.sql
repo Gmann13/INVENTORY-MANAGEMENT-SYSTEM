@@ -868,3 +868,82 @@ CREATE OR REPLACE PROCEDURE delete_stock
     DBMS_OUTPUT.PUT_LINE('STOCK ' || V_STOCK_ID || ' DOES NOT EXIST! CANNOT DELETE');    
                end;
 
+
+---------------CUSTOMER DETAIL UPDATE PROCEDURE---------------
+CREATE OR REPLACE PROCEDURE update_customer (
+    P_CUSTOMER_ID IN CUSTOMER.CUSTOMER_ID%type,
+    p_cus_f_name in customer.cus_f_name%type,
+    p_cus_l_name in customer.cus_l_name%type,
+    p_cus_dob in customer.cus_dob%type,
+    p_cus_since in customer.cus_since%type,
+    p_cus_gender in customer.cus_gender%type,
+    p_cus_contact_no in customer.cus_contact_no%type,
+    p_cus_alternate_no in customer.cus_alternate_no%type,
+    p_cus_email_id in customer.cus_email_id%type,
+    p_cus_address_1 in customer.cus_address_1%type,
+    p_cus_address_2 in customer.cus_address_2%type,
+    p_cus_city in customer.cus_city%type,
+    p_cus_state in customer.cus_state%type,
+    p_cus_country in customer.cus_country%type,
+    p_cus_zip in customer.cus_zip%type
+                                            )
+IS
+v_customer_id number;
+v_cus_f_name varchar2(20);
+v_CUS_L_NAME varchar2(20);
+v_cus_contact_no number;
+v_cus_dob date;
+INVALID_FIRST_NAME EXCEPTION;
+INVALID_LAST_NAME EXCEPTION;
+INVALID_CONTACT_NO EXCEPTION;
+INVALID_DATE_OF_BIRTH EXCEPTION;
+
+BEGIN
+    IF v_cus_f_name is NULL then
+      RAISE INVALID_FIRST_NAME;
+    END IF;
+    IF v_CUS_L_NAME IS NULL THEN
+      RAISE INVALID_LAST_NAME;
+    END IF;
+    IF v_cus_contact_no is NULL or  LENGTH(p_cus_contact_no) != 10  then
+       RAISE INVALID_CONTACT_NO;
+    END IF;        
+    IF v_cus_dob is NULL or ((sysdate - p_cus_dob)/365) < 13 then
+       RAISE INVALID_DATE_OF_BIRTH;
+    END IF;
+
+update customer set cus_f_name = p_cus_f_name,
+                    cus_l_name = p_cus_l_name,
+                    cus_dob = p_cus_dob,
+                    cus_since = p_cus_since,
+                    cus_gender = p_cus_gender,
+                    cus_contact_no = p_cus_contact_no,
+                    cus_alternate_no = p_cus_alternate_no,
+                    cus_email_id = p_cus_email_id,
+                    cus_address_1 = p_cus_address_1,
+                    cus_address_2 = p_cus_address_2,
+                    cus_city = p_cus_city,
+                    cus_state = p_cus_state,
+                    cus_country = p_cus_country,
+                    cus_zip = p_cus_zip  
+    where customer_id = p_customer_id;
+    COMMIT;
+        DBMS_OUTPUT.PUT_LINE('Customer ' || v_customer_id || ' updated successfully!');
+        
+        EXCEPTION
+        WHEN INVALID_FIRST_NAME THEN
+            dbms_output.put_line('YOU DID NOT ADD A FIRST NAME. PLEASE ADD A FIRST NAME');
+        RETURN;
+        WHEN INVALID_LAST_NAME THEN
+            dbms_output.put_line('YOU DID NOT ADD A LAST NAME. PLEASE ADD A LAST NAME');
+        RETURN;
+        WHEN INVALID_CONTACT_NO THEN
+            dbms_output.put_line('INVALID CONTACT NUMBER. ADD A 10 DIGIT CONTACT NUMBER');
+        RETURN;
+        WHEN INVALID_DATE_OF_BIRTH THEN
+            dbms_output.put_line('AGE RESTRICTION!!');
+        RETURN;
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE(SQLERRM);
+END;
+/
