@@ -249,3 +249,380 @@ AS
                end;
       
 END STOCK_PKG;
+
+
+
+
+------------------------------SUPPLIER PACKAGE-------------------------------
+
+CREATE OR REPLACE EDITIONABLE PACKAGE SUPPLIER_PKG
+AS
+PROCEDURE INSERT_SUPPLIERS
+(
+                        P_SUPPLIER_ID IN SUPPLIERS.SUPPLIER_ID%TYPE,
+                        P_SUPPLIER_NAME IN SUPPLIERS.SUPPLIER_NAME%TYPE,
+                        P_SUPPLIER_CONTACT_NO IN SUPPLIERS.SUPPLIER_CONTACT_NO%TYPE,
+                        P_SUPPLIER_EMAIL_ID IN SUPPLIERS.SUPPLIER_EMAIL_ID%TYPE,
+                        P_SUPPLIER_ADDRESS_1  IN SUPPLIERS.SUPPLIER_ADDRESS_1%TYPE,
+                        P_SUPPLIER_ADDRESS_2 IN SUPPLIERS.SUPPLIER_ADDRESS_2%TYPE,
+                        P_SUPPLIER_CITY IN SUPPLIERS.SUPPLIER_CITY%TYPE,
+                        P_SUPPLIER_STATE IN SUPPLIERS.SUPPLIER_STATE%TYPE,
+                        P_SUPPLIER_ZIP IN SUPPLIERS.SUPPLIER_ZIP%TYPE,
+                        P_SUPPLIER_SINCE IN SUPPLIERS.SUPPLIER_SINCE%TYPE
+);
+
+
+PROCEDURE UPDATE_SUPPLIERS
+(
+                    
+                        P_SUPPLIER_ID IN SUPPLIERS.SUPPLIER_ID%TYPE,
+                        P_SUPPLIER_NAME IN SUPPLIERS.SUPPLIER_NAME%TYPE,
+                        P_SUPPLIER_CONTACT_NO IN SUPPLIERS.SUPPLIER_CONTACT_NO%TYPE,
+                        P_SUPPLIER_EMAIL_ID IN SUPPLIERS.SUPPLIER_EMAIL_ID%TYPE,
+                        P_SUPPLIER_ADDRESS_1  IN SUPPLIERS.SUPPLIER_ADDRESS_1%TYPE,
+                        P_SUPPLIER_ADDRESS_2 IN SUPPLIERS.SUPPLIER_ADDRESS_2%TYPE,
+                        P_SUPPLIER_CITY IN SUPPLIERS.SUPPLIER_CITY%TYPE,
+                        P_SUPPLIER_STATE IN SUPPLIERS.SUPPLIER_STATE%TYPE,
+                        P_SUPPLIER_ZIP IN SUPPLIERS.SUPPLIER_ZIP%TYPE,
+                        P_SUPPLIER_SINCE IN SUPPLIERS.SUPPLIER_SINCE%TYPE
+);
+
+
+PROCEDURE DELETE_SUPPLIERS
+(p_SUPPLIER_id IN SUPPLIERS.SUPPLIER_id%TYPE);
+
+
+END SUPPLIER_PKG;
+
+CREATE OR REPLACE EDITIONABLE PACKAGE BODY SUPPLIER_PKG
+AS 
+PROCEDURE INSERT_SUPPLIERS
+(
+                        P_SUPPLIER_ID IN SUPPLIERS.SUPPLIER_ID%TYPE,
+                        P_SUPPLIER_NAME IN SUPPLIERS.SUPPLIER_NAME%TYPE,
+                        P_SUPPLIER_CONTACT_NO IN SUPPLIERS.SUPPLIER_CONTACT_NO%TYPE,
+                        P_SUPPLIER_EMAIL_ID IN SUPPLIERS.SUPPLIER_EMAIL_ID%TYPE,
+                        P_SUPPLIER_ADDRESS_1  IN SUPPLIERS.SUPPLIER_ADDRESS_1%TYPE,
+                        P_SUPPLIER_ADDRESS_2 IN SUPPLIERS.SUPPLIER_ADDRESS_2%TYPE,
+                        P_SUPPLIER_CITY IN SUPPLIERS.SUPPLIER_CITY%TYPE,
+                        P_SUPPLIER_STATE IN SUPPLIERS.SUPPLIER_STATE%TYPE,
+                        P_SUPPLIER_ZIP IN SUPPLIERS.SUPPLIER_ZIP%TYPE,
+                        P_SUPPLIER_SINCE IN SUPPLIERS.SUPPLIER_SINCE%TYPE
+)
+
+AS
+                        v_supplier_id NUMBER;
+                        v_email_exists NUMBER;
+                        v_contact_exists NUMBER;
+                        EX_RAISE_EMAIL_ERROR EXCEPTION;
+                        EX_RAISE_CONTACT_ERROR EXCEPTION;
+                        INVALID_SUPPLIER_NAME EXCEPTION;
+                        INVALID_CONTACT_NO EXCEPTION;
+                        
+BEGIN
+    -- Get the next supplier ID from the sequence
+   SELECT COUNT(*) INTO v_email_exists FROM suppliers WHERE supplier_email_id = p_supplier_email_id;
+   SELECT COUNT(*) INTO v_contact_exists FROM SUPPLIERS WHERE supplier_contact_no = p_supplier_contact_no;
+    
+ --------EXCEPTION QUERY---------
+    IF v_email_exists > 0 THEN
+      RAISE  EX_RAISE_EMAIL_ERROR;
+    END IF;  
+    IF v_contact_exists > 0 THEN
+      RAISE  EX_RAISE_CONTACT_ERROR;
+    END IF;
+    IF p_supplier_name is NULL   then
+      RAISE INVALID_SUPPLIER_NAME;
+    END IF;   
+    IF p_supplier_contact_no is NULL or  LENGTH(p_supplier_contact_no) != 10  then
+      RAISE INVALID_CONTACT_NO;
+    END IF;
+
+------INSERTING PRIMARY KEY-------------
+SELECT supplier_id_seq.currVAL INTO v_supplier_id FROM DUAL;
+
+----------Insert new supplier record into the database----------
+    INSERT INTO suppliers (
+                        SUPPLIER_ID,
+                        SUPPLIER_NAME,
+                        SUPPLIER_CONTACT_NO,
+                        SUPPLIER_EMAIL_ID,
+                        SUPPLIER_ADDRESS_1,
+                        SUPPLIER_ADDRESS_2,
+                        SUPPLIER_CITY,
+                        SUPPLIER_STATE,
+                        SUPPLIER_ZIP,
+                        SUPPLIER_SINCE
+    ) VALUES (
+                        v_supplier_id,
+                        P_SUPPLIER_NAME,
+                        P_SUPPLIER_CONTACT_NO,
+                        P_SUPPLIER_EMAIL_ID,
+                        P_SUPPLIER_ADDRESS_1,
+                        P_SUPPLIER_ADDRESS_2,
+                        P_SUPPLIER_CITY,
+                        P_SUPPLIER_STATE,
+                        P_SUPPLIER_ZIP,
+                        SYSDATE
+                        
+    );
+   
+    DBMS_OUTPUT.PUT_LINE('Supplier ' || v_supplier_id || ' onboarded successfully!');
+    
+    EXCEPTION
+    WHEN EX_RAISE_EMAIL_ERROR THEN
+      dbms_output.put_line('Customer email id already exists. Please use another email id.');
+    RETURN;
+    WHEN EX_RAISE_CONTACT_ERROR THEN
+      dbms_output.put_line('SUPPLIER CONTACT NO already exists. Please use another CONTACT NO.');
+    RETURN;
+    WHEN INVALID_SUPPLIER_NAME THEN
+      dbms_output.put_line('YOU DID NOT ADD A SUPPLIER NAME. PLEASE ADD A SUPPLIER NAME');
+    RETURN;
+    WHEN INVALID_CONTACT_NO THEN
+      dbms_output.put_line('INVALID CONTACT NUMBER. ADD A 10 DIGIT CONTACT NUMBER');
+    RETURN;
+    WHEN OTHERS THEN
+      DBMS_OUTPUT.PUT_LINE(SQLERRM);
+END INSERT_SUPPLIERS;
+
+PROCEDURE UPDATE_SUPPLIERS
+(
+                    
+                        P_SUPPLIER_ID IN SUPPLIERS.SUPPLIER_ID%TYPE,
+                        P_SUPPLIER_NAME IN SUPPLIERS.SUPPLIER_NAME%TYPE,
+                        P_SUPPLIER_CONTACT_NO IN SUPPLIERS.SUPPLIER_CONTACT_NO%TYPE,
+                        P_SUPPLIER_EMAIL_ID IN SUPPLIERS.SUPPLIER_EMAIL_ID%TYPE,
+                        P_SUPPLIER_ADDRESS_1  IN SUPPLIERS.SUPPLIER_ADDRESS_1%TYPE,
+                        P_SUPPLIER_ADDRESS_2 IN SUPPLIERS.SUPPLIER_ADDRESS_2%TYPE,
+                        P_SUPPLIER_CITY IN SUPPLIERS.SUPPLIER_CITY%TYPE,
+                        P_SUPPLIER_STATE IN SUPPLIERS.SUPPLIER_STATE%TYPE,
+                        P_SUPPLIER_ZIP IN SUPPLIERS.SUPPLIER_ZIP%TYPE,
+                        P_SUPPLIER_SINCE IN SUPPLIERS.SUPPLIER_SINCE%TYPE
+)
+
+AS
+v_supplier_id number;
+v_supplier_name varchar2(20);
+v_supplier_contact_no number;
+INVALID_NAME EXCEPTION;
+INVALID_CONTACT_NO EXCEPTION;
+
+BEGIN
+    IF v_supplier_name is NULL then
+      RAISE INVALID_NAME;
+    END IF;
+    IF v_supplier_contact_no is NULL or  LENGTH(p_supplier_contact_no) != 10  then
+       RAISE INVALID_CONTACT_NO;
+    END IF;        
+
+UPDATE SUPPLIERS SET SUPPLIER_NAME = P_SUPPLIER_NAME,
+                     SUPPLIER_CONTACT_NO = P_SUPPLIER_CONTACT_NO,
+                     SUPPLIER_EMAIL_ID = P_SUPPLIER_EMAIL_ID,
+                     SUPPLIER_ADDRESS_1 = P_SUPPLIER_ADDRESS_1,
+                     SUPPLIER_ADDRESS_2 = P_SUPPLIER_ADDRESS_2,
+                     SUPPLIER_CITY = P_SUPPLIER_CITY,
+                     SUPPLIER_STATE = P_SUPPLIER_STATE,
+                     SUPPLIER_ZIP = P_SUPPLIER_ZIP,
+                     SUPPLIER_SINCE = P_SUPPLIER_SINCE
+    WHERE SUPPLIER_ID = P_SUPPLIER_ID;
+COMMIT;
+            DBMS_OUTPUT.PUT_LINE('supplier ' || v_supplier_id || ' updated successfully!');
+        
+        EXCEPTION
+        WHEN INVALID_NAME THEN
+            dbms_output.put_line('YOU DID NOT ADD A FIRST NAME. PLEASE ADD A FIRST NAME');
+        RETURN;
+        WHEN INVALID_CONTACT_NO THEN
+            dbms_output.put_line('INVALID CONTACT NUMBER. ADD A 10 DIGIT CONTACT NUMBER');
+        RETURN;
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE(SQLERRM);
+
+END UPDATE_SUPPLIERS;
+
+PROCEDURE DELETE_SUPPLIERS
+(p_SUPPLIER_id IN SUPPLIERS.SUPPLIER_id%TYPE)
+
+AS
+    V_SUPPLIER_ID NUMBER;
+        INVALID_SUPPLIER_ID EXCEPTION;       
+               begin 
+              SELECT COUNT(*) INTO V_SUPPLIER_ID FROM SUPPLIERS WHERE SUPPLIER_ID = p_supplier_id;
+               if  V_SUPPLIER_ID > 0  then
+            raise INVALID_SUPPLIER_ID;
+            END IF; 
+               delete from suppliers where supplier_id = p_supplier_id;
+           EXCEPTION
+    WHEN INVALID_SUPPLIER_ID THEN
+    DBMS_OUTPUT.PUT_LINE('SUPPLIER ' || V_SUPPLIER_ID || ' DOES NOT EXIST! CANNOT DELETE');     
+               end DELETE_SUPPLIERS;
+
+END SUPPLIER_PKG;
+
+---------------------------------SUPPLIER PACKAGE BODY-------------------------------------
+CREATE OR REPLACE EDITIONABLE PACKAGE BODY SUPPLIER_PKG
+AS 
+PROCEDURE INSERT_SUPPLIERS
+(
+                        P_SUPPLIER_ID IN SUPPLIERS.SUPPLIER_ID%TYPE,
+                        P_SUPPLIER_NAME IN SUPPLIERS.SUPPLIER_NAME%TYPE,
+                        P_SUPPLIER_CONTACT_NO IN SUPPLIERS.SUPPLIER_CONTACT_NO%TYPE,
+                        P_SUPPLIER_EMAIL_ID IN SUPPLIERS.SUPPLIER_EMAIL_ID%TYPE,
+                        P_SUPPLIER_ADDRESS_1  IN SUPPLIERS.SUPPLIER_ADDRESS_1%TYPE,
+                        P_SUPPLIER_ADDRESS_2 IN SUPPLIERS.SUPPLIER_ADDRESS_2%TYPE,
+                        P_SUPPLIER_CITY IN SUPPLIERS.SUPPLIER_CITY%TYPE,
+                        P_SUPPLIER_STATE IN SUPPLIERS.SUPPLIER_STATE%TYPE,
+                        P_SUPPLIER_ZIP IN SUPPLIERS.SUPPLIER_ZIP%TYPE,
+                        P_SUPPLIER_SINCE IN SUPPLIERS.SUPPLIER_SINCE%TYPE
+)
+
+AS
+                        v_supplier_id NUMBER;
+                        v_email_exists NUMBER;
+                        v_contact_exists NUMBER;
+                        EX_RAISE_EMAIL_ERROR EXCEPTION;
+                        EX_RAISE_CONTACT_ERROR EXCEPTION;
+                        INVALID_SUPPLIER_NAME EXCEPTION;
+                        INVALID_CONTACT_NO EXCEPTION;
+                        
+BEGIN
+    -- Get the next supplier ID from the sequence
+   SELECT COUNT(*) INTO v_email_exists FROM suppliers WHERE supplier_email_id = p_supplier_email_id;
+   SELECT COUNT(*) INTO v_contact_exists FROM SUPPLIERS WHERE supplier_contact_no = p_supplier_contact_no;
+    
+ --------EXCEPTION QUERY---------
+    IF v_email_exists > 0 THEN
+      RAISE  EX_RAISE_EMAIL_ERROR;
+    END IF;  
+    IF v_contact_exists > 0 THEN
+      RAISE  EX_RAISE_CONTACT_ERROR;
+    END IF;
+    IF p_supplier_name is NULL   then
+      RAISE INVALID_SUPPLIER_NAME;
+    END IF;   
+    IF p_supplier_contact_no is NULL or  LENGTH(p_supplier_contact_no) != 10  then
+      RAISE INVALID_CONTACT_NO;
+    END IF;
+
+------INSERTING PRIMARY KEY-------------
+SELECT supplier_id_seq.currVAL INTO v_supplier_id FROM DUAL;
+
+----------Insert new supplier record into the database----------
+    INSERT INTO suppliers (
+                        SUPPLIER_ID,
+                        SUPPLIER_NAME,
+                        SUPPLIER_CONTACT_NO,
+                        SUPPLIER_EMAIL_ID,
+                        SUPPLIER_ADDRESS_1,
+                        SUPPLIER_ADDRESS_2,
+                        SUPPLIER_CITY,
+                        SUPPLIER_STATE,
+                        SUPPLIER_ZIP,
+                        SUPPLIER_SINCE
+    ) VALUES (
+                        v_supplier_id,
+                        P_SUPPLIER_NAME,
+                        P_SUPPLIER_CONTACT_NO,
+                        P_SUPPLIER_EMAIL_ID,
+                        P_SUPPLIER_ADDRESS_1,
+                        P_SUPPLIER_ADDRESS_2,
+                        P_SUPPLIER_CITY,
+                        P_SUPPLIER_STATE,
+                        P_SUPPLIER_ZIP,
+                        SYSDATE
+                        
+    );
+   
+    DBMS_OUTPUT.PUT_LINE('Supplier ' || v_supplier_id || ' onboarded successfully!');
+    
+    EXCEPTION
+    WHEN EX_RAISE_EMAIL_ERROR THEN
+      dbms_output.put_line('Customer email id already exists. Please use another email id.');
+    RETURN;
+    WHEN EX_RAISE_CONTACT_ERROR THEN
+      dbms_output.put_line('SUPPLIER CONTACT NO already exists. Please use another CONTACT NO.');
+    RETURN;
+    WHEN INVALID_SUPPLIER_NAME THEN
+      dbms_output.put_line('YOU DID NOT ADD A SUPPLIER NAME. PLEASE ADD A SUPPLIER NAME');
+    RETURN;
+    WHEN INVALID_CONTACT_NO THEN
+      dbms_output.put_line('INVALID CONTACT NUMBER. ADD A 10 DIGIT CONTACT NUMBER');
+    RETURN;
+    WHEN OTHERS THEN
+      DBMS_OUTPUT.PUT_LINE(SQLERRM);
+END INSERT_SUPPLIERS;
+
+PROCEDURE UPDATE_SUPPLIERS
+(
+                    
+                        P_SUPPLIER_ID IN SUPPLIERS.SUPPLIER_ID%TYPE,
+                        P_SUPPLIER_NAME IN SUPPLIERS.SUPPLIER_NAME%TYPE,
+                        P_SUPPLIER_CONTACT_NO IN SUPPLIERS.SUPPLIER_CONTACT_NO%TYPE,
+                        P_SUPPLIER_EMAIL_ID IN SUPPLIERS.SUPPLIER_EMAIL_ID%TYPE,
+                        P_SUPPLIER_ADDRESS_1  IN SUPPLIERS.SUPPLIER_ADDRESS_1%TYPE,
+                        P_SUPPLIER_ADDRESS_2 IN SUPPLIERS.SUPPLIER_ADDRESS_2%TYPE,
+                        P_SUPPLIER_CITY IN SUPPLIERS.SUPPLIER_CITY%TYPE,
+                        P_SUPPLIER_STATE IN SUPPLIERS.SUPPLIER_STATE%TYPE,
+                        P_SUPPLIER_ZIP IN SUPPLIERS.SUPPLIER_ZIP%TYPE,
+                        P_SUPPLIER_SINCE IN SUPPLIERS.SUPPLIER_SINCE%TYPE
+)
+
+AS
+v_supplier_id number;
+v_supplier_name varchar2(20);
+v_supplier_contact_no number;
+INVALID_NAME EXCEPTION;
+INVALID_CONTACT_NO EXCEPTION;
+
+BEGIN
+    IF v_supplier_name is NULL then
+      RAISE INVALID_NAME;
+    END IF;
+    IF v_supplier_contact_no is NULL or  LENGTH(p_supplier_contact_no) != 10  then
+       RAISE INVALID_CONTACT_NO;
+    END IF;        
+
+UPDATE SUPPLIERS SET SUPPLIER_NAME = P_SUPPLIER_NAME,
+                     SUPPLIER_CONTACT_NO = P_SUPPLIER_CONTACT_NO,
+                     SUPPLIER_EMAIL_ID = P_SUPPLIER_EMAIL_ID,
+                     SUPPLIER_ADDRESS_1 = P_SUPPLIER_ADDRESS_1,
+                     SUPPLIER_ADDRESS_2 = P_SUPPLIER_ADDRESS_2,
+                     SUPPLIER_CITY = P_SUPPLIER_CITY,
+                     SUPPLIER_STATE = P_SUPPLIER_STATE,
+                     SUPPLIER_ZIP = P_SUPPLIER_ZIP,
+                     SUPPLIER_SINCE = P_SUPPLIER_SINCE
+    WHERE SUPPLIER_ID = P_SUPPLIER_ID;
+COMMIT;
+            DBMS_OUTPUT.PUT_LINE('supplier ' || v_supplier_id || ' updated successfully!');
+        
+        EXCEPTION
+        WHEN INVALID_NAME THEN
+            dbms_output.put_line('YOU DID NOT ADD A FIRST NAME. PLEASE ADD A FIRST NAME');
+        RETURN;
+        WHEN INVALID_CONTACT_NO THEN
+            dbms_output.put_line('INVALID CONTACT NUMBER. ADD A 10 DIGIT CONTACT NUMBER');
+        RETURN;
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE(SQLERRM);
+
+END UPDATE_SUPPLIERS;
+
+PROCEDURE DELETE_SUPPLIERS
+(p_SUPPLIER_id IN SUPPLIERS.SUPPLIER_id%TYPE)
+
+AS
+    V_SUPPLIER_ID NUMBER;
+        INVALID_SUPPLIER_ID EXCEPTION;       
+               begin 
+              SELECT COUNT(*) INTO V_SUPPLIER_ID FROM SUPPLIERS WHERE SUPPLIER_ID = p_supplier_id;
+               if  V_SUPPLIER_ID > 0  then
+            raise INVALID_SUPPLIER_ID;
+            END IF; 
+               delete from suppliers where supplier_id = p_supplier_id;
+           EXCEPTION
+    WHEN INVALID_SUPPLIER_ID THEN
+    DBMS_OUTPUT.PUT_LINE('SUPPLIER ' || V_SUPPLIER_ID || ' DOES NOT EXIST! CANNOT DELETE');     
+               end DELETE_SUPPLIERS;
+
+END SUPPLIER_PKG;
