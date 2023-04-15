@@ -947,3 +947,118 @@ update customer set cus_f_name = p_cus_f_name,
             DBMS_OUTPUT.PUT_LINE(SQLERRM);
 END;
 /
+
+
+
+
+----------------------ADMIN DETAIL UPDATE PROCEDURE---------------
+CREATE OR REPLACE PROCEDURE UPDATE_ADMIN(
+                            P_ADMIN_ID IN ADMIN.ADMIN_ID%TYPE,
+                            P_ADMIN_F_NAME IN ADMIN.ADMIN_F_NAME%TYPE,
+                            P_ADMIN_L_NAME IN ADMIN.ADMIN_L_NAME%TYPE,
+                            P_ADMIN_DOB IN ADMIN.ADMIN_DOB%TYPE,
+                            P_ADMIN_SINCE IN ADMIN.ADMIN_SINCE%TYPE,
+                            P_ADMIN_EMAIL_ID IN ADMIN.ADMIN_EMAIL_ID%TYPE,
+                            P_ADMIN_CONTACT_NO IN ADMIN.ADMIN_CONTACT_NO%TYPE
+                            )
+IS
+v_admin_id number;
+v_admin_f_name varchar2(20);
+v_admin_L_NAME varchar2(20);
+v_admin_contact_no number;
+INVALID_FIRST_NAME EXCEPTION;
+INVALID_LAST_NAME EXCEPTION;
+INVALID_CONTACT_NO EXCEPTION;
+
+BEGIN
+
+    IF v_admin_f_name is NULL then
+      RAISE INVALID_FIRST_NAME;
+    END IF;
+    IF v_admin_L_NAME IS NULL THEN
+      RAISE INVALID_LAST_NAME;
+    END IF;
+    IF v_admin_contact_no is NULL or  LENGTH(p_admin_contact_no) != 10  then
+       RAISE INVALID_CONTACT_NO;
+    END IF;        
+
+UPDATE ADMIN SET ADMIN_F_NAME = P_ADMIN_F_NAME,
+                 ADMIN_L_NAME = P_ADMIN_L_NAME,
+                 ADMIN_DOB = P_ADMIN_DOB,
+                 ADMIN_SINCE = P_ADMIN_SINCE,
+                 ADMIN_EMAIL_ID = P_ADMIN_EMAIL_ID,
+                 ADMIN_CONTACT_NO = P_ADMIN_CONTACT_NO
+    WHERE ADMIN_ID = P_ADMIN_ID;
+    COMMIT;
+    
+            DBMS_OUTPUT.PUT_LINE('admin ' || v_admin_id || ' updated successfully!');
+        
+        EXCEPTION
+        WHEN INVALID_FIRST_NAME THEN
+            dbms_output.put_line('YOU DID NOT ADD A FIRST NAME. PLEASE ADD A FIRST NAME');
+        RETURN;
+        WHEN INVALID_LAST_NAME THEN
+            dbms_output.put_line('YOU DID NOT ADD A LAST NAME. PLEASE ADD A LAST NAME');
+        RETURN;
+        WHEN INVALID_CONTACT_NO THEN
+            dbms_output.put_line('INVALID CONTACT NUMBER. ADD A 10 DIGIT CONTACT NUMBER');
+        RETURN;
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE(SQLERRM);
+    
+END;
+/
+
+---------------SUPPLIER DETAIL UPDATE---------------------------
+CREATE OR REPLACE PROCEDURE UPDATE_SUPPLIERS(
+                        P_SUPPLIER_ID IN SUPPLIERS.SUPPLIER_ID%TYPE,
+                        P_SUPPLIER_NAME IN SUPPLIERS.SUPPLIER_NAME%TYPE,
+                        P_SUPPLIER_CONTACT_NO IN SUPPLIERS.SUPPLIER_CONTACT_NO%TYPE,
+                        P_SUPPLIER_EMAIL_ID IN SUPPLIERS.SUPPLIER_EMAIL_ID%TYPE,
+                        P_SUPPLIER_ADDRESS_1  IN SUPPLIERS.SUPPLIER_ADDRESS_1%TYPE,
+                        P_SUPPLIER_ADDRESS_2 IN SUPPLIERS.SUPPLIER_ADDRESS_2%TYPE,
+                        P_SUPPLIER_CITY IN SUPPLIERS.SUPPLIER_CITY%TYPE,
+                        P_SUPPLIER_STATE IN SUPPLIERS.SUPPLIER_STATE%TYPE,
+                        P_SUPPLIER_ZIP IN SUPPLIERS.SUPPLIER_ZIP%TYPE,
+                        P_SUPPLIER_SINCE IN SUPPLIERS.SUPPLIER_SINCE%TYPE
+                        )
+IS
+v_supplier_id number;
+v_supplier_name varchar2(20);
+v_supplier_contact_no number;
+INVALID_NAME EXCEPTION;
+INVALID_CONTACT_NO EXCEPTION;
+
+BEGIN
+    IF v_supplier_name is NULL then
+      RAISE INVALID_NAME;
+    END IF;
+    IF v_supplier_contact_no is NULL or  LENGTH(p_supplier_contact_no) != 10  then
+       RAISE INVALID_CONTACT_NO;
+    END IF;        
+
+UPDATE SUPPLIERS SET SUPPLIER_NAME = P_SUPPLIER_NAME,
+                     SUPPLIER_CONTACT_NO = P_SUPPLIER_CONTACT_NO,
+                     SUPPLIER_EMAIL_ID = P_SUPPLIER_EMAIL_ID,
+                     SUPPLIER_ADDRESS_1 = P_SUPPLIER_ADDRESS_1,
+                     SUPPLIER_ADDRESS_2 = P_SUPPLIER_ADDRESS_2,
+                     SUPPLIER_CITY = P_SUPPLIER_CITY,
+                     SUPPLIER_STATE = P_SUPPLIER_STATE,
+                     SUPPLIER_ZIP = P_SUPPLIER_ZIP,
+                     SUPPLIER_SINCE = P_SUPPLIER_SINCE
+    WHERE SUPPLIER_ID = P_SUPPLIER_ID;
+COMMIT;
+            DBMS_OUTPUT.PUT_LINE('supplier ' || v_supplier_id || ' updated successfully!');
+        
+        EXCEPTION
+        WHEN INVALID_NAME THEN
+            dbms_output.put_line('YOU DID NOT ADD A FIRST NAME. PLEASE ADD A FIRST NAME');
+        RETURN;
+        WHEN INVALID_CONTACT_NO THEN
+            dbms_output.put_line('INVALID CONTACT NUMBER. ADD A 10 DIGIT CONTACT NUMBER');
+        RETURN;
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE(SQLERRM);
+
+END;
+/
